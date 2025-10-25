@@ -1,0 +1,9 @@
+python-telegram-bot>=20
+discord.py>=2.3
+python-dotenv>=1.0
+fastapi>=0.111
+uvicorn[standard]>=0.30
+motor>=3.4.0
+pymongo
+requests
+pydantic~=2.11.9

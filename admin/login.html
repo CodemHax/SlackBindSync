@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BindSync Admin Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #00a884 0%, #008069 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 48px;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: #00a884;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            color: #111b21;
+            font-size: 28px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: #667781;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #111b21;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e9edef;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: #f0f2f5;
+            color: #111b21;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #00a884;
+            background: #fff;
+        }
+
+        button {
+            width: 100%;
+            background: #00a884;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background: #008069;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,168,132,0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #667781;
+        }
+
+        .register-link a {
+            color: #00a884;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            background: #d4edda;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .modal-icon.success {
+            background: #d4edda;
+        }
+
+        .modal-icon.error {
+            background: #f8d7da;
+        }
+
+        .modal-icon.warning {
+            background: #fff3cd;
+        }
+
+        .modal-title {
+            color: #111b21;
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .modal-message {
+            color: #667781;
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            margin: 0;
+        }
+
+        .modal-buttons .btn-cancel {
+            background: #e9edef;
+            color: #111b21;
+        }
+
+        .modal-buttons .btn-cancel:hover {
+            background: #d9dee0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modalIcon" class="modal-icon success">✓</div>
+            <div id="modalTitle" class="modal-title">Success</div>
+            <div id="modalMessage" class="modal-message">Operation completed successfully</div>
+            <div class="modal-buttons" id="modalButtons">
+                <button onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+    <div class="auth-card">
+        <div class="logo">
+            <div class="logo-icon">🔐</div>
+        </div>
+
+        <div id="registerSection">
+            <h1>Create Admin Account</h1>
+            <p>⚠️ One-time setup - Only ONE admin can be registered</p>
+
+            <div id="registerError" class="error-message"></div>
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="regUsername" placeholder="Choose a username" autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="regPassword" placeholder="Create a secure password (min 6 characters)" autocomplete="new-password">
+            </div>
+
+            <button onclick="register()" id="registerBtn">Create Admin Account</button>
+
+            <div class="register-link" style="color: #888; font-size: 13px; margin-top: 16px;">
+                🔒 This action can only be performed once. Choose your credentials carefully.
+            </div>
+        </div>
+
+        <div id="loginSection" style="display: none;">
+            <h1>Welcome Back</h1>
+            <p>Sign in to your admin dashboard</p>
+
+            <div id="loginError" class="error-message"></div>
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="loginUsername" placeholder="Enter your username" autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password">
+            </div>
+
+            <button onclick="login()" id="loginBtn">Sign In</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        checkAdminStatus();
+
+        function showModal(type, title, message, buttons = null) {
+            const overlay = document.getElementById('modalOverlay');
+            const icon = document.getElementById('modalIcon');
+            const titleEl = document.getElementById('modalTitle');
+            const messageEl = document.getElementById('modalMessage');
+            const buttonsEl = document.getElementById('modalButtons');
+
+            const icons = {
+                success: { emoji: '✓', class: 'success' },
+                error: { emoji: '✗', class: 'error' },
+                warning: { emoji: '⚠', class: 'warning' }
+            };
+
+            const iconData = icons[type] || icons.success;
+            icon.textContent = iconData.emoji;
+            icon.className = `modal-icon ${iconData.class}`;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            if (buttons) {
+                buttonsEl.innerHTML = buttons;
+            } else {
+                buttonsEl.innerHTML = '<button onclick="closeModal()">OK</button>';
+            }
+
+            overlay.classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+        }
+
+        async function checkAdminStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/status`);
+                const data = await response.json();
+
+                if (data.registration_required) {
+                    showRegister();
+                } else {
+                    showLogin();
+                }
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+                showLogin();
+            }
+        }
+
+        function showRegister() {
+            document.getElementById('registerSection').style.display = 'block';
+            document.getElementById('loginSection').style.display = 'none';
+        }
+
+        function showLogin() {
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('registerSection').style.display = 'none';
+        }
+
+        function showError(elementId, message) {
+            const errorDiv = document.getElementById(elementId);
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        async function register() {
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+
+            if (!username || !password) {
+                showError('registerError', 'Please fill in all fields');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('registerError', 'Password must be at least 6 characters');
+                return;
+            }
+
+            const btn = document.getElementById('registerBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating...';
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showModal('success', 'Success!', 'Admin registered successfully! Redirecting to login...',
+                        '<button onclick="closeModal(); document.getElementById(\'regUsername\').value = \'\'; document.getElementById(\'regPassword\').value = \'\'; showLogin();">Continue</button>');
+                } else {
+                    showError('registerError', data.detail || 'Registration failed');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showError('registerError', 'Network error. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                showError('loginError', 'Please fill in all fields');
+                return;
+            }
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('admin_session_token', data.session_token);
+                    window.location.href = '/admin/dashboard';
+                } else {
+                    showError('loginError', data.detail || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('loginError', 'Network error. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        }
+
+        document.getElementById('regPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+
+        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>
