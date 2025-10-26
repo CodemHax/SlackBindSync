@@ -16,9 +16,9 @@ async def configure():
     await col.create_index("timestamp")
     await col.create_index("tg_msg_id", sparse=True)
     await col.create_index("dc_msg_id", sparse=True)
+    await col.create_index("slack_ts", sparse=True)
 
-
-async def add_message(source, text, username=None, tg_msg_id=None, dc_msg_id=None, reply_to_tg_id=None, reply_to_dc_id=None, reply_to_id=None,timestamp=None):
+async def add_message(source, text, username=None, tg_msg_id=None, dc_msg_id=None, slack_ts=None, reply_to_tg_id=None, reply_to_dc_id=None, reply_to_slack_ts=None, reply_to_id=None,timestamp=None):
     db = get_db()
     col = db["messages"]
     doc = {
@@ -28,9 +28,11 @@ async def add_message(source, text, username=None, tg_msg_id=None, dc_msg_id=Non
         "username": username,
         "timestamp": float(timestamp or time.time()),
         "tg_msg_id": tg_msg_id,
+        "slack_ts": slack_ts,
         "dc_msg_id": dc_msg_id,
         "reply_to_id": reply_to_id,
         "reply_to_tg_id": reply_to_tg_id,
+        "reply_to_slack_ts": reply_to_slack_ts,
         "reply_to_dc_id": reply_to_dc_id,
     }
     await col.insert_one(doc)
@@ -88,3 +90,36 @@ async def set_dc_msg_id(internal_id, dc_msg_id):
     db = get_db()
     col = db["messages"]
     await col.update_one({"_id": internal_id}, {"$set": {"dc_msg_id": dc_msg_id}})
+
+
+async def find_by_slack_ts(slack_ts):
+    db = get_db()
+    col = db["messages"]
+    d = await col.find_one({"slack_ts": slack_ts})
+    return api_shape(d)
+
+
+async def set_slack_ts_for_dc(dc_msg_id, slack_ts):
+    db = get_db()
+    col = db["messages"]
+    await col.update_many({"dc_msg_id": dc_msg_id}, {"$set": {"slack_ts": slack_ts}})
+
+
+async def set_slack_ts_for_tg(tg_msg_id, slack_ts):
+    db = get_db()
+    col = db["messages"]
+    await col.update_many({"tg_msg_id": tg_msg_id}, {"$set": {"slack_ts": slack_ts}})
+
+
+async def set_dc_id_for_slack(slack_ts, dc_msg_id):
+    db = get_db()
+    col = db["messages"]
+    await col.update_many({"slack_ts": slack_ts}, {"$set": {"dc_msg_id": dc_msg_id}})
+
+
+async def set_tg_id_for_slack(slack_ts, tg_msg_id):
+    db = get_db()
+    col = db["messages"]
+    await col.update_many({"slack_ts": slack_ts}, {"$set": {"tg_msg_id": tg_msg_id}})
+
+

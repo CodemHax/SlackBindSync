@@ -1,21 +1,9 @@
-from slack_sdk.web.async_client import AsyncWebClient
 from slack_sdk.socket_mode.aiohttp import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
-from src.utils.bridge import isdd, istg
+from slack_sdk.web.async_client import AsyncWebClient
 from src.database import store_functions
-import logging
-import aiohttp
-
-# Monkey patch to fix the ping encoding issue in aiohttp
-original_ping = aiohttp.ClientWebSocketResponse.ping
-
-async def patched_ping(self, message=b''):
-    if isinstance(message, str):
-        message = message.encode('utf-8')
-    return await original_ping(self, message)
-
-aiohttp.ClientWebSocketResponse.ping = patched_ping
+from src.utils.bridge import isdd, istg
 
 
 class SlackBot:
@@ -47,41 +35,31 @@ class SlackBot:
         if event.get("type") != "message":
             return
 
-        # Ignore bot messages and message edits
         if event.get("subtype") in ["bot_message", "message_changed"]:
             return
 
-        # Ignore own messages
         if event.get("user") == self.bot_user_id:
             return
 
-        # Only process messages from the specified channel
         if event.get("channel") != self.channel_id:
             return
 
         text = event.get("text", "")
 
-        # Ignore messages that are already forwarded from Discord or Telegram
         if isdd(text) or istg(text):
             return
-
         user_id = event.get("user")
         username = await self.get_username(user_id)
         slack_ts = event.get("ts")
         thread_ts = event.get("thread_ts")
 
-        # Format message for Discord and Telegram
-        msg_dc = f"[SLACK] {username}: {text}"
-        msg_tg = f"[SLACK] {username}: {text}"
-
-        # Handle replies
+        msg_dc = f"[SK] {username}: {text}"
+        msg_tg = f"[SK] {username}: {text}"
         reply_to_dc_id = None
         reply_to_tg_id = None
         reply_to_internal_id = None
         reply_to_slack_ts = None
-
         if thread_ts and thread_ts != slack_ts:
-            # This is a reply to another message
             reply_to_slack_ts = thread_ts
             reply_to_dc_id = self.map_slack_to_dc.get(thread_ts)
             reply_to_tg_id = self.map_slack_to_tg.get(thread_ts)
@@ -99,7 +77,6 @@ class SlackBot:
             username=username,
             slack_ts=slack_ts,
             reply_to_slack_ts=reply_to_slack_ts,
-            reply_to_dc_id=reply_to_dc_id,
             reply_to_tg_id=reply_to_tg_id,
             reply_to_id=reply_to_internal_id,
         )
@@ -112,7 +89,6 @@ class SlackBot:
                 self.map_dc_to_slack[dc_msg_id] = slack_ts
                 await store_functions.set_dc_id_for_slack(slack_ts, int(dc_msg_id))
 
-        # Forward to Telegram
         if self.forward_to_telegram:
             tg_msg_id = await self.forward_to_telegram(msg_tg, reply_to_telegram_message_id=reply_to_tg_id)
             if tg_msg_id:
@@ -141,7 +117,6 @@ class SlackBot:
             await self.process_message(event)
 
     async def send_message(self, text, reply_to_slack_ts=None):
-        """Send a message to the Slack channel"""
         try:
             kwargs = {
                 "channel": self.channel_id,
@@ -160,10 +135,8 @@ class SlackBot:
         return None
 
     async def create_client(self):
-        """Initialize the Slack clients"""
         self.client = AsyncWebClient(token=self.bot_token)
 
-        # Get bot user ID
         try:
             auth_response = await self.client.auth_test()
             if auth_response["ok"]:
@@ -172,8 +145,6 @@ class SlackBot:
         except Exception as e:
             print(f"Error getting bot user ID: {e}")
 
-        # Disable auto_reconnect_enabled to avoid ping issues
-        # Create socket mode client for real-time events
         self.socket_client = SocketModeClient(
             app_token=self.app_token,
             auto_reconnect_enabled=True,
@@ -185,10 +156,8 @@ class SlackBot:
         self.socket_client.socket_mode_request_listeners.append(
             self.handle_socket_mode_request
         )
-
         return self.socket_client
 
     def get_client(self):
-        """Get the socket mode client"""
         return self.socket_client if self.socket_client else None
 

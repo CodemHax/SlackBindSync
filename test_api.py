@@ -32,6 +32,7 @@ class BindSyncTester:
                     print(f"   Runtime:")
                     print(f"      - Telegram Bot: {'✅' if runtime.get('telegram_bot') else '❌'}")
                     print(f"      - Discord Bot: {'✅' if runtime.get('discord_bot') else '❌'}")
+                    print(f"      - Slack Bot: {'✅' if runtime.get('slack_bot') else '❌'}")
                     print(f"      - API Configured: {'✅' if runtime.get('api_configured') else '❌'}")
                     return data
                 else:
@@ -87,6 +88,7 @@ class BindSyncTester:
                     print(f"✅ Message sent successfully!")
                     print(f"   Message ID: {data.get('id')}")
                     print(f"   Telegram ID: {data.get('tg_msg_id')}")
+                    print(f"   Slack TS: {data.get('slack_ts')}")
                     print(f"   Discord ID: {data.get('dc_msg_id')}")
                     return data
                 else:
@@ -98,13 +100,16 @@ class BindSyncTester:
             print(f"❌ Send message error: {e}")
             return {"error": str(e)}
 
-    async def test_reply_to_message(self, message_id: str, username: str = "TestUser", text: str = "This is a test reply!") -> Dict[str, Any]:
+    async def test_reply_to_message(self, message_id: str, username: str = "TestUser", text: str = "This is a test reply!", target: Optional[str] = None) -> Dict[str, Any]:
         print(f"💬 Testing reply to message {message_id}...")
 
         payload = {
             "username": username,
             "text": text
         }
+
+        if target:
+            payload["target"] = target
 
         headers = {}
         if self.api_token:
@@ -116,6 +121,7 @@ class BindSyncTester:
                     data = await response.json()
                     print(f"✅ Reply sent successfully!")
                     print(f"   Reply ID: {data.get('id')}")
+                    print(f"   Slack TS: {data.get('slack_ts')}")
                     print(f"   Telegram ID: {data.get('tg_msg_id')}")
                     print(f"   Discord ID: {data.get('dc_msg_id')}")
                     return data
@@ -126,6 +132,51 @@ class BindSyncTester:
                     return {"error": f"HTTP {response.status}", "response": text}
         except Exception as e:
             print(f"❌ Reply error: {e}")
+            return {"error": str(e)}
+
+    async def test_reply_with_mention(self, message_id: str, username: str = "TestUser", mention_user: str = "Alice") -> Dict[str, Any]:
+        text = f"@{mention_user} This is a reply with a mention!"
+        print(f"💬 Testing reply with mention (@{mention_user})...")
+        return await self.test_reply_to_message(message_id, username, text)
+
+    async def test_send_message_with_tags(self, username: str = "TestUser", mentioned_users: list = None) -> Dict[str, Any]:
+        if mentioned_users is None:
+            mentioned_users = ["Alice", "Bob"]
+
+        mentions = " ".join([f"@{user}" for user in mentioned_users])
+        text = f"{mentions} Hello everyone! This is a test message with tags."
+
+        print(f"📤 Testing send message with tags ({mentions})...")
+        return await self.test_send_message(username, text)
+
+    async def test_targeted_message(self, username: str = "TestUser", text: str = "Targeted message test", target: str = "telegram") -> Dict[str, Any]:
+        print(f"🎯 Testing targeted message (target: {target})...")
+
+        payload = {
+            "username": username,
+            "text": text,
+            "target": target
+        }
+
+        headers = {}
+        if self.api_token:
+            headers['X-API-Token'] = self.api_token
+
+        try:
+            async with self.session.post(f"{self.base_url}/messages", json=payload, headers=headers) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    print(f"✅ Targeted message sent successfully!")
+                    print(f"   Message ID: {data.get('id')}")
+                    print(f"   Target: {target}")
+                    return data
+                else:
+                    print(f"❌ Targeted message failed with status: {response.status}")
+                    text = await response.text()
+                    print(f"   Response: {text}")
+                    return {"error": f"HTTP {response.status}", "response": text}
+        except Exception as e:
+            print(f"❌ Targeted message error: {e}")
             return {"error": str(e)}
 
     async def test_get_specific_message(self, message_id: str) -> Dict[str, Any]:
@@ -336,7 +387,6 @@ class BindSyncTester:
             return {"error": str(e)}
 
 async def run_system_check():
-    """Comprehensive system check - verifies all components are working"""
     print("=" * 60)
     print("This will verify all system components without requiring tokens")
 
@@ -372,6 +422,7 @@ async def run_system_check():
             runtime = health_result.get('runtime', {})
             print(f"Telegram Bot:         {'✅ RUNNING' if runtime.get('telegram_bot') else '❌ NOT RUNNING'}")
             print(f"Discord Bot:          {'✅ RUNNING' if runtime.get('discord_bot') else '❌ NOT RUNNING'}")
+            print(f"Slack Bot:            {'✅ RUNNING' if runtime.get('slack_bot') else '❌ NOT RUNNING'}")
             print(f"Database:             {'✅ CONNECTED' if runtime.get('api_configured') else '❌ DISCONNECTED'}")
 
         print("=" * 60)
@@ -425,7 +476,38 @@ async def run_comprehensive_test():
             )
             print()
 
-        print("6️⃣ Getting updated message list...")
+            print("6️⃣ Testing reply with mention...")
+            await tester.test_reply_with_mention(
+                message_id,
+                username="TestReply",
+                mention_user="TestScript"
+            )
+            print()
+
+        print("7️⃣ Testing message with tags...")
+        tagged_result = await tester.test_send_message_with_tags(
+            username="TagTester",
+            mentioned_users=["Alice", "Bob", "Charlie"]
+        )
+        print()
+
+        print("8️⃣ Testing targeted message (Telegram only)...")
+        await tester.test_targeted_message(
+            username="TargetTest",
+            text="This message should only go to Telegram",
+            target="telegram"
+        )
+        print()
+
+        print("9️⃣ Testing targeted message (Discord only)...")
+        await tester.test_targeted_message(
+            username="TargetTest",
+            text="This message should only go to Discord",
+            target="discord"
+        )
+        print()
+
+        print("🔟 Getting updated message list...")
         await tester.test_get_messages(limit=5)
 
     print("=" * 50)
@@ -475,17 +557,18 @@ async def run_message_test():
         if "error" not in result:
             tg_sent = result.get("tg_msg_id") is not None
             dc_sent = result.get("dc_msg_id") is not None
+            slack_sent = result.get("slack_ts") is not None
 
             print(f"\n📊 Message Delivery Summary:")
             print(f"   Telegram: {'✅ Sent' if tg_sent else '❌ Failed'}")
             print(f"   Discord: {'✅ Sent' if dc_sent else '❌ Failed'}")
+            print(f"   Slack: {'✅ Sent' if slack_sent else '❌ Failed'}")
 
-            if not tg_sent and not dc_sent:
-                print("\n⚠️ No messages were sent to either platform!")
+            if not tg_sent and not dc_sent and not slack_sent:
+                print("\n⚠️ No messages were sent to any platform!")
                 print("   Check the server console output for detailed error messages.")
 
 async def run_setup():
-    """Initial setup - register admin account"""
     print("🔧 BindSync Initial Setup")
     print("Let's set up your admin account")
     print()
@@ -611,9 +694,176 @@ async def run_token_based_test(api_token: str):
                 username="TokenReply",
                 text="Reply using API token"
             )
+            print()
+
+            print("5️⃣ Testing reply with mention...")
+            await tester.test_reply_with_mention(
+                message_id,
+                username="TokenReply",
+                mention_user="TokenUser"
+            )
 
     print("=" * 50)
     print("✅ Token-based test completed!")
+
+async def run_all_endpoints_test():
+    print("🎯 Complete Endpoint Testing Suite")
+    print("=" * 60)
+    print("⚠️  NOTE: This test requires an API token!")
+    print("    Get a token from: http://localhost:8000/admin")
+    print()
+
+    token = input("Enter your API token: ").strip()
+
+    if not token:
+        print("❌ Token is required for API testing")
+        return
+
+    async with BindSyncTester(api_token=token) as tester:
+        print("\n📊 HEALTH & STATUS CHECKS")
+        print("=" * 60)
+
+        print("1️⃣ Testing health endpoint...")
+        await tester.test_health_check()
+        print()
+
+        print("2️⃣ Testing frontend endpoint...")
+        await tester.test_frontend()
+        print()
+
+        print("\n📖 MESSAGE RETRIEVAL TESTS")
+        print("=" * 60)
+
+        print("3️⃣ Testing get messages (default limit)...")
+        messages_result = await tester.test_get_messages()
+        print()
+
+        print("4️⃣ Testing get messages (limit=5, offset=0)...")
+        await tester.test_get_messages(limit=5, offset=0)
+        print()
+
+        print("5️⃣ Testing get messages (limit=3, offset=2)...")
+        await tester.test_get_messages(limit=3, offset=2)
+        print()
+
+        print("\n📤 MESSAGE SENDING TESTS")
+        print("=" * 60)
+
+        print("6️⃣ Testing send simple message...")
+        simple_msg = await tester.test_send_message(
+            username="EndpointTester",
+            text=f"Simple test message at {time.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+        print()
+
+        print("7️⃣ Testing send message with tags/mentions...")
+        tagged_msg = await tester.test_send_message_with_tags(
+            username="MentionTester",
+            mentioned_users=["Alice", "Bob", "Charlie"]
+        )
+        print()
+
+        print("8️⃣ Testing targeted message (Telegram)...")
+        tg_msg = await tester.test_targeted_message(
+            username="TargetTest",
+            text="Telegram-only message",
+            target="telegram"
+        )
+        print()
+
+        print("9️⃣ Testing targeted message (Discord)...")
+        dc_msg = await tester.test_targeted_message(
+            username="TargetTest",
+            text="Discord-only message",
+            target="discord"
+        )
+        print()
+
+        print("🔟 Testing targeted message (Slack)...")
+        slack_msg = await tester.test_targeted_message(
+            username="TargetTest",
+            text="Slack-only message",
+            target="slack"
+        )
+        print()
+
+        print("\n💬 REPLY TESTS")
+        print("=" * 60)
+
+        if "id" in simple_msg:
+            message_id = simple_msg["id"]
+
+            print("1️⃣1️⃣ Testing get specific message...")
+            await tester.test_get_specific_message(message_id)
+            print()
+
+            print("1️⃣2️⃣ Testing simple reply...")
+            await tester.test_reply_to_message(
+                message_id,
+                username="ReplyTester",
+                text=f"Simple reply at {time.strftime('%Y-%m-%d %H:%M:%S')}"
+            )
+            print()
+
+            print("1️⃣3️⃣ Testing reply with mention...")
+            await tester.test_reply_with_mention(
+                message_id,
+                username="ReplyTester",
+                mention_user="EndpointTester"
+            )
+            print()
+
+            print("1️⃣4️⃣ Testing reply with multiple mentions...")
+            multi_mention_reply = await tester.test_reply_to_message(
+                message_id,
+                username="ReplyTester",
+                text="@Alice @Bob @Charlie Check this out!"
+            )
+            print()
+
+            print("1️⃣5️⃣ Testing targeted reply (Telegram only)...")
+            await tester.test_reply_to_message(
+                message_id,
+                username="ReplyTester",
+                text="This reply should only go to Telegram",
+                target="telegram"
+            )
+            print()
+
+            print("1️⃣6️⃣ Testing targeted reply (Discord only)...")
+            await tester.test_reply_to_message(
+                message_id,
+                username="ReplyTester",
+                text="This reply should only go to Discord",
+                target="discord"
+            )
+            print()
+
+        print("\n🔍 EDGE CASES & ERROR HANDLING")
+        print("=" * 60)
+
+        print("1️⃣7️⃣ Testing get non-existent message...")
+        await tester.test_get_specific_message("non_existent_id_12345")
+        print()
+
+        print("1️⃣8️⃣ Testing reply to non-existent message...")
+        await tester.test_reply_to_message(
+            "non_existent_id_12345",
+            username="ErrorTester",
+            text="This should fail"
+        )
+        print()
+
+        print("\n📊 FINAL MESSAGE LIST")
+        print("=" * 60)
+
+        print("1️⃣9️⃣ Getting final message list (last 10)...")
+        await tester.test_get_messages(limit=10)
+        print()
+
+        print("=" * 60)
+        print("✨ All endpoint tests completed!")
+        print("=" * 60)
 
 if __name__ == "__main__":
     import sys
@@ -643,10 +893,12 @@ if __name__ == "__main__":
                 print("Usage: python test_api.py token <your_api_token>")
         elif test_type == "full":
             asyncio.run(run_comprehensive_test())
+        elif test_type == "all" or test_type == "endpoints":
+            asyncio.run(run_all_endpoints_test())
         elif test_type == "help" or test_type == "--help" or test_type == "-h":
-            print("=" * 60)
+            print("=" * 70)
             print("BindSync API Test Suite")
-            print("=" * 60)
+            print("=" * 70)
             print("\nAvailable commands:")
             print("  system | check                     - System health check (no token needed)")
             print("  setup                              - Initial admin setup")
@@ -655,12 +907,20 @@ if __name__ == "__main__":
             print("  auth <username> <password>         - Full authentication test")
             print("  token <api_token>                  - Token-based API test")
             print("  full                               - Comprehensive test suite")
+            print("  all | endpoints                    - Test ALL endpoints (19 tests)")
             print("  help                               - Show this help message")
             print("\nExamples:")
             print("  python test_api.py system          - Check if everything is running")
             print("  python test_api.py setup           - First time setup")
             print("  python test_api.py auth admin pass - Test with admin credentials")
-            print("=" * 60)
+            print("  python test_api.py all             - Complete endpoint testing")
+            print("\nNew Features Tested:")
+            print("  ✅ Message replies with mentions/tags")
+            print("  ✅ Messages with multiple user mentions")
+            print("  ✅ Targeted messages (platform-specific)")
+            print("  ✅ Targeted replies (platform-specific)")
+            print("  ✅ Edge cases and error handling")
+            print("=" * 70)
         else:
             print(f"❌ Unknown command: {test_type}")
             print("Run 'python test_api.py help' for available commands")
