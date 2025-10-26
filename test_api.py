@@ -1,7 +1,6 @@
 
 import asyncio
 import aiohttp
-import json
 import time
 from typing import Dict, Any, Optional
 
@@ -21,14 +20,19 @@ class BindSyncTester:
             await self.session.close()
 
     async def test_health_check(self) -> Dict[str, Any]:
-
         print("🔍 Testing health check endpoint...")
         try:
             async with self.session.get(f"{self.base_url}/health") as response:
                 if response.status == 200:
                     data = await response.json()
                     print("✅ Health check successful!")
-                    print(f"   Runtime state: {json.dumps(data['runtime'], indent=2)}")
+                    print(f"   Status: {data.get('status')}")
+                    print(f"   Version: {data.get('version')}")
+                    runtime = data.get('runtime', {})
+                    print(f"   Runtime:")
+                    print(f"      - Telegram Bot: {'✅' if runtime.get('telegram_bot') else '❌'}")
+                    print(f"      - Discord Bot: {'✅' if runtime.get('discord_bot') else '❌'}")
+                    print(f"      - API Configured: {'✅' if runtime.get('api_configured') else '❌'}")
                     return data
                 else:
                     print(f"❌ Health check failed with status: {response.status}")
@@ -149,7 +153,6 @@ class BindSyncTester:
             return {"error": str(e)}
 
     async def test_frontend(self) -> Dict[str, Any]:
-        """Test the frontend endpoint"""
         print("🌐 Testing frontend endpoint...")
         try:
             async with self.session.get(f"{self.base_url}/") as response:
@@ -169,6 +172,47 @@ class BindSyncTester:
                     return {"error": f"HTTP {response.status}", "response": text}
         except Exception as e:
             print(f"❌ Frontend error: {e}")
+            return {"error": str(e)}
+
+    async def test_admin_status(self) -> Dict[str, Any]:
+        print("📊 Testing admin status endpoint...")
+        try:
+            async with self.session.get(f"{self.base_url}/admin/status") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    admin_exists = data.get('admin_exists', False)
+                    print(f"✅ Admin status retrieved!")
+                    print(f"   Admin exists: {'✅ Yes' if admin_exists else '❌ No (registration required)'}")
+                    return data
+                else:
+                    print(f"❌ Admin status check failed with status: {response.status}")
+                    text = await response.text()
+                    print(f"   Response: {text}")
+                    return {"error": f"HTTP {response.status}", "response": text}
+        except Exception as e:
+            print(f"❌ Admin status error: {e}")
+            return {"error": str(e)}
+
+    async def test_admin_register(self, username: str, password: str) -> Dict[str, Any]:
+        print(f"📝 Testing admin registration (username: {username})...")
+        payload = {
+            "username": username,
+            "password": password
+        }
+        try:
+            async with self.session.post(f"{self.base_url}/admin/register", json=payload) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    print(f"✅ Admin registered successfully!")
+                    print(f"   Username: {data.get('admin', {}).get('username')}")
+                    return data
+                else:
+                    print(f"❌ Admin registration failed with status: {response.status}")
+                    text = await response.text()
+                    print(f"   Response: {text}")
+                    return {"error": f"HTTP {response.status}", "response": text}
+        except Exception as e:
+            print(f"❌ Admin registration error: {e}")
             return {"error": str(e)}
 
     async def test_admin_login(self, username: str, password: str) -> Dict[str, Any]:
@@ -291,6 +335,52 @@ class BindSyncTester:
             print(f"❌ Test error: {e}")
             return {"error": str(e)}
 
+async def run_system_check():
+    """Comprehensive system check - verifies all components are working"""
+    print("=" * 60)
+    print("This will verify all system components without requiring tokens")
+
+    async with BindSyncTester() as tester:
+        print("1️⃣ Testing health endpoint...")
+        health_result = await tester.test_health_check()
+        print()
+
+        print("2️⃣ Testing admin status...")
+        status_result = await tester.test_admin_status()
+        print()
+
+        print("3️⃣ Testing frontend...")
+        await tester.test_frontend()
+        print()
+
+        print("4️⃣ Testing API protection (without token)...")
+        await tester.test_without_token()
+        print()
+
+        # Summary
+        print("=" * 60)
+        print("📊 SYSTEM CHECK SUMMARY")
+        print("-" * 60)
+
+        health_ok = health_result.get('status') == 'healthy' if 'error' not in health_result else False
+        admin_exists = status_result.get('admin_exists', False) if 'error' not in status_result else False
+
+        print(f"Health Status:        {'✅ HEALTHY' if health_ok else '❌ UNHEALTHY'}")
+        print(f"Admin Configured:     {'✅ YES' if admin_exists else '⚠️  NO (registration needed)'}")
+
+        if health_ok:
+            runtime = health_result.get('runtime', {})
+            print(f"Telegram Bot:         {'✅ RUNNING' if runtime.get('telegram_bot') else '❌ NOT RUNNING'}")
+            print(f"Discord Bot:          {'✅ RUNNING' if runtime.get('discord_bot') else '❌ NOT RUNNING'}")
+            print(f"Database:             {'✅ CONNECTED' if runtime.get('api_configured') else '❌ DISCONNECTED'}")
+
+        print("=" * 60)
+
+        if not admin_exists:
+            print("\n⚠️  NEXT STEPS:")
+            print("   1. Register an admin: python test_api.py setup")
+            print("   2. Then run full tests: python test_api.py full")
+
 async def run_comprehensive_test():
     print("🚀 Starting BindSync API Comprehensive Test")
     print("=" * 50)
@@ -305,11 +395,15 @@ async def run_comprehensive_test():
         return
 
     async with BindSyncTester(api_token=token) as tester:
-        print("\n1️⃣ Testing get existing messages...")
+        print("\n1️⃣ Testing health check...")
+        await tester.test_health_check()
+        print()
+
+        print("2️⃣ Testing get existing messages...")
         messages_result = await tester.test_get_messages()
         print()
 
-        print("2️⃣ Testing send message...")
+        print("3️⃣ Testing send message...")
         send_result = await tester.test_send_message(
             username="TestScript",
             text=f"Test message sent at {time.strftime('%Y-%m-%d %H:%M:%S')}"
@@ -319,11 +413,11 @@ async def run_comprehensive_test():
         if "id" in send_result:
             message_id = send_result["id"]
 
-            print("3️⃣ Testing get specific message...")
+            print("4️⃣ Testing get specific message...")
             await tester.test_get_specific_message(message_id)
             print()
 
-            print("4️⃣ Testing reply to message...")
+            print("5️⃣ Testing reply to message...")
             await tester.test_reply_to_message(
                 message_id,
                 username="TestReply",
@@ -331,7 +425,7 @@ async def run_comprehensive_test():
             )
             print()
 
-        print("5️⃣ Getting updated message list...")
+        print("6️⃣ Getting updated message list...")
         await tester.test_get_messages(limit=5)
 
     print("=" * 50)
@@ -389,6 +483,35 @@ async def run_message_test():
             if not tg_sent and not dc_sent:
                 print("\n⚠️ No messages were sent to either platform!")
                 print("   Check the server console output for detailed error messages.")
+
+async def run_setup():
+    """Initial setup - register admin account"""
+    print("🔧 BindSync Initial Setup")
+    print("Let's set up your admin account")
+    print()
+    async with BindSyncTester() as tester:
+        status = await tester.test_admin_status()
+        if status.get('admin_exists'):
+            print("\n⚠️  Admin already registered!")
+            print("   Use 'python test_api.py auth <username> <password>' to test authentication")
+            return
+
+        print("\n📝 Register Admin Account")
+        username = input("Enter admin username: ").strip()
+        password = input("Enter admin password: ").strip()
+
+        if not username or not password:
+            print("❌ Username and password are required!")
+            return
+
+        result = await tester.test_admin_register(username, password)
+
+        if "error" not in result:
+            print("\n✅ Setup complete!")
+            print("   You can now:")
+            print(f"   1. Login at: http://localhost:8000/admin")
+            print(f"   2. Create API tokens for accessing the API")
+            print(f"   3. Run tests: python test_api.py auth {username} <password>")
 
 async def run_auth_test(admin_username: str = None, admin_password: str = None):
     print("🔐 Authentication & Token Management Test")
@@ -497,7 +620,11 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1:
         test_type = sys.argv[1].lower()
-        if test_type == "quick":
+        if test_type == "system" or test_type == "check":
+            asyncio.run(run_system_check())
+        elif test_type == "setup":
+            asyncio.run(run_setup())
+        elif test_type == "quick":
             asyncio.run(run_quick_test())
         elif test_type == "message":
             asyncio.run(run_message_test())
@@ -514,13 +641,28 @@ if __name__ == "__main__":
                 asyncio.run(run_token_based_test(token))
             else:
                 print("Usage: python test_api.py token <your_api_token>")
-        else:
-            print("Available test types:")
-            print("  quick                              - Quick runtime test")
-            print("  message                            - Message sending test")
-            print("  auth <username> <password>         - Authentication test")
-            print("  token <api_token>                  - Token-based API test")
-            print("  (no argument)                      - Comprehensive test")
+        elif test_type == "full":
             asyncio.run(run_comprehensive_test())
+        elif test_type == "help" or test_type == "--help" or test_type == "-h":
+            print("=" * 60)
+            print("BindSync API Test Suite")
+            print("=" * 60)
+            print("\nAvailable commands:")
+            print("  system | check                     - System health check (no token needed)")
+            print("  setup                              - Initial admin setup")
+            print("  quick                              - Quick API status test")
+            print("  message                            - Message sending test")
+            print("  auth <username> <password>         - Full authentication test")
+            print("  token <api_token>                  - Token-based API test")
+            print("  full                               - Comprehensive test suite")
+            print("  help                               - Show this help message")
+            print("\nExamples:")
+            print("  python test_api.py system          - Check if everything is running")
+            print("  python test_api.py setup           - First time setup")
+            print("  python test_api.py auth admin pass - Test with admin credentials")
+            print("=" * 60)
+        else:
+            print(f"❌ Unknown command: {test_type}")
+            print("Run 'python test_api.py help' for available commands")
     else:
-        asyncio.run(run_comprehensive_test())
+        asyncio.run(run_system_check())
