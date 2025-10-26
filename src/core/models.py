@@ -5,7 +5,7 @@ from typing import Optional
 class MessageCreate(BaseModel):
     text: str
     username: str = "API"
-    reply_to_id: str = None
+    reply_to_id: Optional[str] = None
     target: Optional[str] = None
 
 
