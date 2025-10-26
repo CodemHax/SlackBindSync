@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Setup Guide - BindSync</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0e1a;
+            color: #e9edef;
+            line-height: 1.6;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 800;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #5865f2 0%, #00a884 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .content {
+            max-width: 900px;
+            margin: 120px auto 60px;
+            padding: 0 24px;
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fff 0%, #8696a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #8696a0;
+            margin-bottom: 60px;
+        }
+
+        .platform-tabs {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 16px 32px;
+            background: rgba(32, 44, 51, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tab:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.3) 0%, rgba(0, 168, 132, 0.3) 100%);
+            border-color: #5865f2;
+        }
+
+        .tab-icon {
+            font-size: 24px;
+        }
+
+        .guide-section {
+            display: none;
+            background: rgba(32, 44, 51, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        .guide-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #fff;
+        }
+
+        h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .step {
+            background: rgba(10, 14, 26, 0.5);
+            border-left: 4px solid #5865f2;
+            padding: 24px;
+            margin-bottom: 24px;
+            border-radius: 8px;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #5865f2 0%, #00a884 100%);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .step-content {
+            color: #b8c5d0;
+            margin-left: 44px;
+        }
+
+        .step-content ul {
+            margin-left: 20px;
+            margin-top: 8px;
+        }
+
+        .step-content li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #00a884;
+            font-size: 14px;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            overflow-x: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .code-block code {
+            background: none;
+            padding: 0;
+            color: #00a884;
+        }
+
+        .warning {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+
+        .info {
+            background: rgba(33, 150, 243, 0.1);
+            border-left: 4px solid #2196f3;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid #4caf50;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 36px;
+            }
+
+            .platform-tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                width: 100%;
+            }
+
+            .guide-section {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <div class="logo-icon">BS</div>
+                <span>BindSync</span>
+            </a>
+            <a href="/" class="back-btn">← Back to Home</a>
+        </div>
+    </nav>
+
+    <div class="content">
+        <h1>📚 Bot Setup Documentation</h1>
+        <p class="subtitle">Complete guide to configuring Telegram, Discord, and Slack bots for BindSync. Follow these instructions to enable real-time message synchronization across all platforms.</p>
+
+        <div class="info" style="margin-bottom: 40px;">
+            <strong>⏱️ Estimated Time:</strong> 15-20 minutes per platform<br>
+            <strong>📋 Prerequisites:</strong> Admin access to Telegram, Discord, or Slack workspace<br>
+            <strong>🔑 Security:</strong> Never share your tokens publicly or commit them to version control<br>
+            <strong>📅 Last Updated:</strong> October 2025 | <strong>Version:</strong> 4.0.0
+        </div>
+
+        <div class="platform-tabs">
+            <div class="tab active" onclick="showGuide('telegram')">
+                <span class="tab-icon">📱</span>
+                <span>Telegram Bot</span>
+            </div>
+            <div class="tab" onclick="showGuide('discord')">
+                <span class="tab-icon">💬</span>
+                <span>Discord Bot</span>
+            </div>
+            <div class="tab" onclick="showGuide('slack')">
+                <span class="tab-icon">💼</span>
+                <span>Slack Bot</span>
+            </div>
+        </div>
+
+        <div id="telegram-guide" class="guide-section active">
+            <h2>🤖 Telegram Bot Setup</h2>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Create a Bot with BotFather
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>Open Telegram and search for <code>@BotFather</code></li>
+                        <li>Send the command <code>/newbot</code></li>
+                        <li>Follow the prompts to choose a name and username for your bot</li>
+                        <li>BotFather will give you a <strong>Bot Token</strong> - copy this token</li>
+                    </ul>
+                    <div class="info">
+                        <strong>Token Format:</strong> The token will look like <code>1234567890:ABCdefGHIjklMNOpqrsTUVwxyz1234567890</code><br>
+                        <strong>Structure:</strong> <code>[BOT_ID]:[AUTH_TOKEN]</code>
+                    </div>
+                    <div class="warning">
+                        ⚠️ <strong>Keep this token secure!</strong> Anyone with this token can control your bot.
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Create a Channel or Group
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>Create a new Telegram channel or group</li>
+                        <li>Add your bot as an administrator</li>
+                        <li>Make sure the bot has permission to read and send messages</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Get the Chat ID
+                </div>
+                <div class="step-content">
+                    <p><strong>Method 1: Using a Bot</strong></p>
+                    <ul>
+                        <li>Add <code>@userinfobot</code> to your channel/group</li>
+                        <li>It will automatically display the Chat ID</li>
+                        <li>Copy the Chat ID (it will be a negative number for groups/channels)</li>
+                    </ul>
+                    <p style="margin-top: 16px;"><strong>Method 2: Using API</strong></p>
+                    <ul>
+                        <li>Send a message in your channel/group</li>
+                        <li>Visit: <code>https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates</code></li>
+                        <li>Replace <code>YOUR_BOT_TOKEN</code> with your actual token</li>
+                        <li>Look for <code>"chat":{"id":-1001234567890}</code> in the response</li>
+                    </ul>
+                    <div class="info">
+                        <strong>Example Chat ID:</strong> <code>-100XXXXXXXXXX</code> (for groups/channels)
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">4</span>
+                    Add to .env File
+                </div>
+                <div class="step-content">
+                    <p>Add these lines to your <code>.env</code> file:</p>
+                    <div class="code-block">
+                        <code>TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz1234567890<br>
+TELEGRAM_CHAT_ID=-1001234567890</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success">
+                ✅ <strong>Done!</strong> Your Telegram bot is now configured. Messages will sync between Telegram and other platforms.
+            </div>
+        </div>
+
+        <div id="discord-guide" class="guide-section">
+            <h2>🎮 Discord Bot Setup</h2>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Create a Discord Application
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>Go to <a href="https://discord.com/developers/applications" target="_blank" style="color: #5865f2;">Discord Developer Portal</a></li>
+                        <li>Click <strong>"New Application"</strong></li>
+                        <li>Enter a name for your application (e.g., "BindSync Bot")</li>
+                        <li>Click <strong>"Create"</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Create a Bot User
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>In your application, go to the <strong>"Bot"</strong> section in the left sidebar</li>
+                        <li>Click <strong>"Add Bot"</strong> and confirm</li>
+                        <li>Under the bot's username, click <strong>"Reset Token"</strong> and copy it</li>
+                        <li>This is your <code>DISCORD_BOT_TOKEN</code></li>
+                    </ul>
+                    <div class="info">
+                        <strong>Token Format:</strong> <code>YOUR_BOT_TOKEN_HERE</code><br>
+                        <strong>Structure:</strong> <code>[USER_ID_BASE64].[TIMESTAMP].[HMAC]</code>
+                    </div>
+                    <div class="warning">
+                        ⚠️ <strong>Keep this token secret!</strong> Never share it or commit it to version control. If exposed, regenerate it immediately.
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Enable Required Intents
+                </div>
+                <div class="step-content">
+                    <p>In the Bot section, scroll down to <strong>"Privileged Gateway Intents"</strong>:</p>
+                    <ul>
+                        <li>Enable <strong>"Message Content Intent"</strong></li>
+                        <li>This allows your bot to read message content</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">4</span>
+                    Invite Bot to Your Server
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>Go to the <strong>"OAuth2"</strong> → <strong>"URL Generator"</strong> section</li>
+                        <li>Under <strong>"Scopes"</strong>, select:
+                            <ul>
+                                <li><code>bot</code></li>
+                            </ul>
+                        </li>
+                        <li>Under <strong>"Bot Permissions"</strong>, select:
+                            <ul>
+                                <li><code>Read Messages/View Channels</code></li>
+                                <li><code>Send Messages</code></li>
+                                <li><code>Read Message History</code></li>
+                            </ul>
+                        </li>
+                        <li>Copy the generated URL and open it in your browser</li>
+                        <li>Select your server and authorize the bot</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">5</span>
+                    Get Channel ID
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>In Discord, go to <strong>Settings</strong> → <strong>Advanced</strong></li>
+                        <li>Enable <strong>"Developer Mode"</strong></li>
+                        <li>Right-click on the channel you want to use</li>
+                        <li>Click <strong>"Copy ID"</strong></li>
+                        <li>This is your <code>DISCORD_CHANNEL_ID</code></li>
+                    </ul>
+                    <div class="info">
+                        <strong>Example Channel ID:</strong> <code>XXXXXXXXXXXXXXXXXX</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">6</span>
+                    Add to .env File
+                </div>
+                <div class="step-content">
+                    <p>Add these lines to your <code>.env</code> file:</p>
+                    <div class="code-block">
+                        <code>DISCORD_BOT_TOKEN=YOUR_BOT_TOKEN_HERE<br>
+DISCORD_CHANNEL_ID=XXXXXXXXXXXXXXXXXX</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success">
+                ✅ <strong>Done!</strong> Your Discord bot is now configured. Messages will sync between Discord and other platforms.
+            </div>
+        </div>
+
+        <div id="slack-guide" class="guide-section">
+            <h2>💼 Slack Bot Setup</h2>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Create a Slack App
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>Go to <a href="https://api.slack.com/apps" target="_blank" style="color: #00a884;">Slack API</a></li>
+                        <li>Click <strong>"Create New App"</strong></li>
+                        <li>Choose <strong>"From scratch"</strong></li>
+                        <li>Enter an app name (e.g., "BindSync Bot")</li>
+                        <li>Select your workspace</li>
+                        <li>Click <strong>"Create App"</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Enable Socket Mode
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>In your app settings, go to <strong>"Socket Mode"</strong></li>
+                        <li>Toggle <strong>"Enable Socket Mode"</strong> to ON</li>
+                        <li>Generate an app-level token:
+                            <ul>
+                                <li>Enter a token name (e.g., "BindSync Socket Token")</li>
+                                <li>Add the <code>connections:write</code> scope</li>
+                                <li>Click <strong>"Generate"</strong></li>
+                            </ul>
+                        </li>
+                        <li>Copy the <strong>App Token</strong> (starts with <code>xapp-</code>)</li>
+                        <li>This is your <code>SLACK_APP_TOKEN</code></li>
+                    </ul>
+                    <div class="info">
+                        <strong>App Token Format:</strong> <code>xapp-1-XXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXX...</code><br>
+                        <strong>Starts with:</strong> <code>xapp-</code> (App-level token)
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Configure Bot Token Scopes
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>Go to <strong>"OAuth & Permissions"</strong></li>
+                        <li>Scroll to <strong>"Bot Token Scopes"</strong></li>
+                        <li>Add these scopes:
+                            <ul>
+                                <li><code>chat:write</code> - Send messages</li>
+                                <li><code>channels:history</code> - Read channel messages</li>
+                                <li><code>channels:read</code> - View channel info</li>
+                                <li><code>users:read</code> - Get user information</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">4</span>
+                    Install App to Workspace
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>Scroll to the top of <strong>"OAuth & Permissions"</strong></li>
+                        <li>Click <strong>"Install to Workspace"</strong></li>
+                        <li>Review permissions and click <strong>"Allow"</strong></li>
+                        <li>Copy the <strong>Bot User OAuth Token</strong> (starts with <code>xoxb-</code>)</li>
+                        <li>This is your <code>SLACK_BOT_TOKEN</code></li>
+                    </ul>
+                    <div class="info">
+                        <strong>Bot Token Format:</strong> <code>xoxb-XXXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXX...</code><br>
+                        <strong>Starts with:</strong> <code>xoxb-</code> (Bot user token)
+                    </div>
+                    <div class="warning">
+                        ⚠️ <strong>Security Note:</strong> Treat both tokens as passwords. Regenerate immediately if compromised.
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">5</span>
+                    Enable Event Subscriptions
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>Go to <strong>"Event Subscriptions"</strong></li>
+                        <li>Toggle <strong>"Enable Events"</strong> to ON</li>
+                        <li>Under <strong>"Subscribe to bot events"</strong>, add:
+                            <ul>
+                                <li><code>message.channels</code> - Listen to messages in channels</li>
+                            </ul>
+                        </li>
+                        <li>Click <strong>"Save Changes"</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">6</span>
+                    Get Channel ID
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>Open Slack and navigate to your channel</li>
+                        <li>Click the channel name at the top</li>
+                        <li>Scroll down in the About tab</li>
+                        <li>At the bottom, you'll see the Channel ID</li>
+                        <li>Copy this ID (e.g., <code>C01234ABCDE</code>)</li>
+                    </ul>
+                    <div class="info">
+                        <strong>Alternative:</strong> Right-click the channel → Copy link. The ID is at the end of the URL.
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">7</span>
+                    Invite Bot to Channel
+                </div>
+                <div class="step-content">
+                    <ul>
+                        <li>In your Slack channel, type: <code>/invite @YourBotName</code></li>
+                        <li>Or click channel name → Integrations → Add apps</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">8</span>
+                    Add to .env File
+                </div>
+                <div class="step-content">
+                    <p>Add these lines to your <code>.env</code> file:</p>
+                    <div class="code-block">
+                        <code>SLACK_BOT_TOKEN=xoxb-XXXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXX<br>
+SLACK_APP_TOKEN=xapp-1-XXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX<br>
+SLACK_CHANNEL_ID=C0XXXXXXXXX</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success">
+                ✅ <strong>Done!</strong> Your Slack bot is now configured. Messages will sync between Slack and other platforms.
+            </div>
+        </div>
+
+        <div style="margin-top: 80px; padding: 40px; background: rgba(32, 44, 51, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px;">
+            <h2 style="margin-top: 0;">🚀 Deployment & Configuration</h2>
+
+            <h3>Environment Variables</h3>
+            <p style="color: #b8c5d0; margin-bottom: 16px;">Create a <code>.env</code> file in your project root with all required configuration:</p>
+            <div class="code-block">
+                <code># Telegram Configuration<br>
+TELEGRAM_BOT_TOKEN=YOUR_BOT_ID:YOUR_BOT_TOKEN_HERE<br>
+TELEGRAM_CHAT_ID=-100XXXXXXXXXX<br>
+<br>
+# Discord Configuration<br>
+DISCORD_BOT_TOKEN=YOUR_BOT_TOKEN_HERE<br>
+DISCORD_CHANNEL_ID=XXXXXXXXXXXXXXXXXX<br>
+<br>
+# Slack Configuration (Optional)<br>
+SLACK_BOT_TOKEN=xoxb-XXXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXX<br>
+SLACK_APP_TOKEN=xapp-1-XXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX<br>
+SLACK_CHANNEL_ID=C0XXXXXXXXX<br>
+<br>
+# Database Configuration<br>
+MONGO_URI=mongodb://localhost:27017<br>
+MONGO_DB=bindsync<br>
+<br>
+# API Configuration<br>
+API_HOST=0.0.0.0<br>
+API_PORT=8000</code>
+            </div>
+
+            <h3>Starting BindSync</h3>
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Install Dependencies
+                </div>
+                <div class="step-content">
+                    <div class="code-block">
+                        <code>pip install -r requirements.txt</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Start MongoDB
+                </div>
+                <div class="step-content">
+                    <p>Ensure MongoDB is running locally or use MongoDB Atlas connection string.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Run the Application
+                </div>
+                <div class="step-content">
+                    <div class="code-block">
+                        <code>python main.py</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="success" style="margin-top: 24px;">
+                ✅ <strong>Success!</strong> BindSync is now running. Check the logs to verify all bots connected successfully.
+            </div>
+
+            <h3 style="margin-top: 40px;">Verification</h3>
+            <p style="color: #b8c5d0;">After starting, you should see:</p>
+            <ul style="color: #b8c5d0; margin-left: 20px; margin-top: 12px;">
+                <li>✓ Configuration loaded</li>
+                <li>✓ Connected to MongoDB</li>
+                <li>✓ Telegram bot polling started</li>
+                <li>✓ Discord bot connected</li>
+                <li>✓ Slack bot connected (if configured)</li>
+                <li>✓ API server running on specified port</li>
+            </ul>
+
+            <div class="info" style="margin-top: 24px;">
+                <strong>📖 Need Help?</strong><br>
+                • Check the logs in <code>bridge.log</code> for detailed error messages<br>
+                • Visit the Admin Dashboard at <code>http://localhost:8000/admin/dashboard</code><br>
+                • Review the API documentation for integration details
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showGuide(platform) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.guide-section').forEach(section => section.classList.remove('active'));
+
+            event.target.closest('.tab').classList.add('active');
+            document.getElementById(platform + '-guide').classList.add('active');
+        }
+    </script>
+</body>
+</html>
+
